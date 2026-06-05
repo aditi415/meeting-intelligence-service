@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+
+  meetings Meeting[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Meeting {
+  id          String   @id @default(uuid())
+  title       String
+  meetingDate DateTime
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  participants Participant[]
+  transcripts  Transcript[]
+  analysis     Analysis?
+  actionItems  ActionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Participant {
+  id    String @id @default(uuid())
+  email String
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Transcript {
+  id        String @id @default(uuid())
+  timestamp String
+  speaker   String
+  text      String
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Analysis {
+  id String @id @default(uuid())
+
+  meetingId String  @unique
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  summary   Json
+  decisions Json
+  followUps Json
+
+  createdAt DateTime @default(now())
+}
+
+model ActionItem {
+  id       String    @id @default(uuid())
+  task     String
+  assignee String
+  dueDate  DateTime?
+
+  status ActionStatus @default(PENDING)
+
+  citations Json
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  reminders ReminderHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReminderHistory {
+  id String @id @default(uuid())
+
+  actionItemId String
+  actionItem   ActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+
+  sentAt  DateTime @default(now())
+  channel String
+  success Boolean
+  message String?
+
+  createdAt DateTime @default(now())
+}
