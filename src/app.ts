@@ -29,4 +29,11 @@ app.use(
     analysisRoutes
   );
 
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Meeting Intelligence Service API is running"
+  });
+});
+
 export default app;
